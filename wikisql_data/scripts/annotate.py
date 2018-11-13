@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 import os
-import records
 import ujson as json
 from stanza.nlp.corenlp import CoreNLPClient
 from tqdm import tqdm
@@ -86,7 +85,6 @@ def is_valid_example(e):
 
 
 def process_tables(ftable, fout=None):
-
     # join words together
     def _join_words(entry):
         result = ""
@@ -102,7 +100,7 @@ def process_tables(ftable, fout=None):
                 table = {
                     "id": raw_table["id"],
                     "header": [ _join_words(annotate(h)) for h in raw_table["header"]],
-                    "content": [[ _join_words(annotate(str(tok))) for tok in l] for l in raw_table["rows"]]
+                    "rows": [[ _join_words(annotate(str(tok))) for tok in l] for l in raw_table["rows"]]
                 }
                 tables.append(table)
             except:
@@ -129,36 +127,33 @@ def process_examples(fexample, ftable, fout):
             d = json.loads(line)
             a = annotate_example(d, tables[d['table_id']])
             if not is_valid_example(a):
-                print(str(a))
+                # raise Exception(str(a))
+                print('Invalid example: {}'.format(str(a)))
                 continue
-                raise Exception(str(a))
 
             gold = Query.from_tokenized_dict(a['query'])
             reconstruct = Query.from_sequence(a['seq_output'], a['table'], lowercase=True)
             if gold.lower() != reconstruct.lower():
                 raise Exception ('Expected:\n{}\nGot:\n{}'.format(gold, reconstruct))
             fo.write(json.dumps(a) + '\n')
-            #print(a)
-            #break
             n_written += 1
         print('wrote {} examples'.format(n_written))
 
 
 if __name__ == '__main__':
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--din', default=os.path.join('..', 'data'), help='data directory')
-    parser.add_argument('--dout', default=os.path.join('..', 'annotated'), help='output directory')
+    parser.add_argument('--din', default=os.path.join('data'), help='data directory')
+    parser.add_argument('--dout', default=os.path.join('annotated'), help='output directory')
     args = parser.parse_args()
 
     if not os.path.isdir(args.dout):
         os.makedirs(args.dout)
     
-#    for split in ["dev","test", "train"]:
     for split in ["dev","test", "train"]:
         process_tables(ftable=os.path.join(args.din, split) + '.tables.jsonl',
-                       fout=os.path.join(args.dout, split) + '.tables.jsonl')
+                       fout=os.path.join(args.dout, split) + '.tables.annotated.jsonl')
         process_examples(fexample=os.path.join(args.din, split) + '.jsonl', 
                          ftable=os.path.join(args.din, split) + '.tables.jsonl', 
-                         fout=os.path.join(args.dout, split) + '.jsonl')
+                         fout=os.path.join(args.dout, split) + '.annotated.jsonl')
     
     

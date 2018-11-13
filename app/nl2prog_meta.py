@@ -94,14 +94,17 @@ class NL2Prog_meta(object):
             for i in train_support_dataset + dev_support_dataset + test_support_dataset:
                 all_dataset += i
 
-        if settings["X1_maxlen"] and settings["X2_maxlen"] and settings["Y_maxlen"]:
-            X1_maxlen = settings["X1_maxlen"]
-            X2_maxlen = settings["X2_maxlen"]
-            Y_maxlen = settings["Y_maxlen"]
-        else:
-            X1_maxlen = max(map(lambda x: len(x["in1"]), all_dataset))
-            X2_maxlen = max(map(lambda x: len(x["in2"]), all_dataset))
-            Y_maxlen = max(map(lambda x: len(x["out"]), all_dataset))
+        # if settings["X1_maxlen"] and settings["X2_maxlen"] and settings["Y_maxlen"]:
+        #     X1_maxlen = settings["X1_maxlen"]
+        #     X2_maxlen = settings["X2_maxlen"]
+        #     Y_maxlen = settings["Y_maxlen"]
+        # else:
+        #     X1_maxlen = max(map(lambda x: len(x["in1"]), all_dataset))
+        #     X2_maxlen = max(map(lambda x: len(x["in2"]), all_dataset))
+        #     Y_maxlen = max(map(lambda x: len(x["out"]), all_dataset))
+        X1_maxlen = max(map(lambda x: len(x["in1"]), all_dataset))
+        X2_maxlen = max(map(lambda x: len(x["in2"]), all_dataset))
+        Y_maxlen = max(map(lambda x: len(x["out"]), all_dataset))
 
         # add 1 to enable the language to deal with pointing to the end
         X_maxlen = X1_maxlen + X2_maxlen + 1

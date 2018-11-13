@@ -35,7 +35,7 @@ def load_tables(file):
             raw = json.loads(l)
 
             raw['header'] = [normalize_phrase(h) for h in raw["header"]]
-            types = raw['types']
+            # types = raw['types']
             rows = raw['rows']
             for i in range(len(rows)):
                 rows[i] = [normalize_phrase(t) if not is_number(t) else t for j, t in enumerate(rows[i])]
@@ -61,12 +61,13 @@ def load_data(file, orig_tables, annotated_tables, add_wrong_entry=False):
             orig_table = orig_tables[table_id]
             annotated_table = annotated_tables[table_id]
 
-            orig_q = entry["question"].strip()
-            annotated_q = entry["annotated_question"]
+            # orig_q = entry["question"].strip()
+            annotated_q = " ".join(entry["question"]["words"])
+            print(annotated_q)
 
             sql_components = [table_id, 
-                              agg_ops[entry["sql"]["agg"]], 
-                              orig_table['header'][entry["sql"]["sel"]]]
+                              agg_ops[entry["query"]["agg"]],
+                              orig_table['header'][entry["query"]["sel"]]]
 
             # each element is a pair of (annotated_const, orig_const)
             # we want to match with the annotated one and replace with the orig one
@@ -76,32 +77,26 @@ def load_data(file, orig_tables, annotated_tables, add_wrong_entry=False):
             flag_nl_missing_const = False
 
             # processing query
-            for cond in entry['sql']['annotated_conds']:
+            for cond in entry['query']['conds']:
                 col = orig_table['header'][cond[0]]
                 op = cond_ops[cond[1]]
 
-                if not is_number(cond[2]):
+                annotated_conds = " ".join(cond[2]["words"])
+                const = normalize_phrase(annotated_conds)
+                const = normalize_const_to_table_entry(const, orig_table, annotated_table)
 
-                    const = normalize_phrase(cond[2])
-                    const = normalize_const_to_table_entry(const, orig_table,
-                                                           annotated_table)
+                if const is None:
+                    # encounter error
+                    # the constant in the query does not appear
+                    # in anywhere in the table
+                    print("<<<")
+                    print(cond[2])
+                    print(const)
+                    print(l)
+                    print(">>>")
+                    flag_query_wrong = True
 
-                    all_consts.append((cond[2], const))
-                    if const is None:
-                        # encounter error
-                        # the constant in the query does not appear
-                        # in anywhere in the table
-                        print("<<<")
-                        print(cond[2])
-                        print(const)
-                        print(l)
-                        print(">>>")
-                        flag_query_wrong = True
-                else:
-                    # it's a number, so its normalized form is also a number
-                    const = cond[2]
-
-                all_consts.append((cond[2], const))
+                all_consts.append((annotated_conds, const))
                 sql_components.extend([col, op, str(const)])
 
             if flag_query_wrong:
@@ -156,8 +151,7 @@ def load_data(file, orig_tables, annotated_tables, add_wrong_entry=False):
                     missed_const.append((p[0],p[1]))
 
             if miss_const:
-                print("# [Warning] the following question will be discarded " 
-                    + " due to not containing question contants.")
+                print("# [Warning] the following question will be discarded due to not containing question constants.")
                 print(sql_components)
                 print(missed_const)
                 print(annotated_q)
@@ -331,15 +325,15 @@ def overlap_score(l1, l2):
 
 if __name__ == '__main__':
     data_dir = "data"
+    annotated_dir = "annotated"
     out_dir = "."
 
     datasets = ["train", "dev", "test"] 
     for dataset in datasets:
         print("# processing dataset {}".format(dataset))
         orig_tables = load_tables(os.path.join(data_dir, dataset + ".tables.jsonl"))
-        annotated_tables = load_tables(os.path.join(data_dir, dataset + ".tables.annotated.jsonl"))
-        result = load_data(os.path.join(data_dir, dataset + ".annotated.jsonl"), 
-                           orig_tables, annotated_tables, True)
+        annotated_tables = load_tables(os.path.join(annotated_dir, dataset + ".tables.annotated.jsonl"))
+        result = load_data(os.path.join(annotated_dir, dataset + ".annotated.jsonl"), orig_tables, annotated_tables)
 
         with open(os.path.join(out_dir, "wikisql_{}.dat".format(dataset)), "w") as f:
             for entry in result:

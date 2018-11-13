@@ -117,7 +117,7 @@ def print_support_set(support_idx, data, filename):
 
 
 if __name__ == '__main__':
-  filedir  = 'input/data/'
+  filedir  = './'
   train_filename =  filedir + 'wikisql_train.dat'
   dev_filename = filedir + 'wikisql_dev.dat'
   test_filename = filedir + 'wikisql_test.dat'
@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
   sql_type_to_indices, classifier = question_classifier(train_data)
 
-  output_filedir = 'nl2prog_input/nl2prog_input_support_rank/'
+  output_filedir = 'nl2prog_input_support_rank/'
 
   # Based on classification + heuristic ranking + use sql length first
   train_support_idx = find_support_sets_rank(train_data, train_data, classifier, sql_type_to_indices)
