@@ -15,25 +15,30 @@ We present the setup for the WikiSQL experiments.
 #### Reproduce Preprocess Steps
 
 1. Download data from [WikiSQL](https://github.com/salesforce/WikiSQL). 
-
-```
-$ cd wikisql_data
-$ wget https://github.com/salesforce/WikiSQL/raw/master/data.tar.bz2
-$ tar -xvjf data.tar.bz2
-```
+    ```
+    $ cd wikisql_data
+    $ wget https://github.com/salesforce/WikiSQL/raw/master/data.tar.bz2
+    $ tar -xvjf data.tar.bz2
+    ```
 2. Put the [lib directory](https://github.com/salesforce/WikiSQL/tree/master/lib) under `wikisql_data/scripts/`
 3. Run annotation using Stanza and preproces the dataset
-```
-$ cd wikisql_data/scripts/
-$ python annotate.py
-$ python prepare.py
-```
-
+    ```
+    $ cd wikisql_data/
+    $ python scripts/annotate.py
+    $ python scripts/prepare_v2.py
+    ```
 4. Put the train/dev/test data into ``input/data`` for model training/testing. 
+    ```
+    $ mkdir input/data
+    $ cp wikisql_data/wikisql_* input/data/
+    ```
 5. Use relevance function to prepare relevance files and put them under ``input/nl2prog_input_support_rank`` 
-```
-python wikisql_data/scripts/relevance.py
-```
+    ```
+    $ cd wikisql_data/
+    $ mkdir nl2prog_input_support_rank
+    $ python scripts/relevance.py
+    $ cp nl2prog_input_support_rank ../input
+    ```
 6. Download pretrained embeddings from [glove](https://nlp.stanford.edu/projects/glove/) and [character n-gram embeddings](http://www.logos.t.u-tokyo.ac.jp/~hassy/publications/arxiv2016jmt/) and put them under ``input/``
 
 
